@@ -212,8 +212,6 @@ class State_Eval(MapLayout):
             enddate = enddate.strip('][').split(', ')
             model_id = request.GET.get('model_id')
             model_id = model_id.strip('][').split(', ')
-            # breakpoint()
-      
             # USGS stations - from AWS s3
             stations_path = f"GeoJSON/StreamStats_{state_id}_4326.geojson" 
             obj = S3.Object(BUCKET_NAME, stations_path)
@@ -494,20 +492,16 @@ class State_Eval(MapLayout):
             
     def update_state_eval_data(self, request, *args, **kwargs):
         """Respond to AJAX calls from the map page."""
-        # breakpoint()
         data = request.POST or request.json()
         request.session['model_id'] = data.get('model_id')
         request.session['start_date'] = data.get('start_date')
         request.session['end_date'] = data.get('end_date')
         request.session['state_id'] = data.get('state_id')
-
-        response_data = {
-
-        }
-        
-        # make a popup to show
+        stations_path = f"GeoJSON/StreamStats_{data.get('state_id')}_4326.geojson"
+        obj = S3.Object(BUCKET_NAME, stations_path)
+        stations_geojson = json.load(obj.get()['Body']) 
         messages.success(request, "The map has been updated with the new data.")
-        return JsonResponse({'success': True, 'message': 'Data updated', 'data': response_data})
+        return JsonResponse({'success': True, 'message': 'Data updated', 'geojson': stations_geojson})
 
 
 

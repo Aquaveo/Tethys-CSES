@@ -38,8 +38,24 @@ function updateData(event) {
   .then(resp => resp.ok ? resp.json() : Promise.reject(resp))
   .then(data => {
     console.log('Server replied:', data);
-    TETHYS_MAP_VIEW.reInitializeMap();
-    // TODO: refresh layers, update map, etc.
+    var olMap = TETHYS_MAP_VIEW.getMap();
+    const mapProj = olMap.getView().getProjection();
+
+    olMap.getLayers().forEach(layer => {
+        if (layer instanceof ol.layer.Vector) {
+            const features = new ol.format.GeoJSON().readFeatures(
+                data.geojson,
+                { dataProjection: 'EPSG:4326', featureProjection: mapProj }
+            );
+            const src = layer.getSource();
+            src.clear(true);
+            src.addFeatures(features);
+            const extent = src.getExtent();
+            if (!ol.extent.isEmpty(extent)) {
+                olMap.getView().fit(extent, { padding: [40, 40, 40, 40], duration: 500 });
+            }   
+        }
+    });
   })
   .catch(err => console.error('REST call failed:', err));
 }
