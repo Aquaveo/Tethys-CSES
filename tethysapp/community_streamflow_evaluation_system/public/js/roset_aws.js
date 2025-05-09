@@ -33,8 +33,8 @@ document.getElementById("btn-id").addEventListener('click',function(){
     data.append('method', 'update_data');
     data.append('start_date', start_date);
     data.append('end_date', end_date);
-    data.append('state_id', state_value);
-    data.append('model_id', model_name);
+    data.append('state_id', state_id);
+    data.append('model_id', model_id);
 
     //make the function here
     fetch(".", {
@@ -47,7 +47,7 @@ document.getElementById("btn-id").addEventListener('click',function(){
      }).then((response) => response.json()).then((data) => {
 
      // Do something magical with your data :)
-
+        console.log(data);
         let stations_geojson = JSON.parse(data['stations_geojson']);
         stations_geojson['features'] = stations_geojson['features'].map(station => {
             return {

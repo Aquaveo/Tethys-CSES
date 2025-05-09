@@ -17,7 +17,7 @@ os.environ['AWS_NO_SIGN_REQUEST'] = 'YES'
 
 #Model evaluation metrics
 from sklearn.metrics import r2_score
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import root_mean_squared_error
 from sklearn.metrics import max_error
 from sklearn.metrics import mean_absolute_percentage_error
 import hydroeval as he
@@ -32,7 +32,7 @@ from django.http import JsonResponse
 from django.urls import reverse_lazy
 from datetime import datetime
 from datetime import date, timedelta
-
+from django.contrib import messages
 #Connect web pages
 from django.http import HttpResponse 
 
@@ -77,8 +77,7 @@ class State_Eval(MapLayout):
     show_properties_popup = True  
     plot_slide_sheet = True
     template_name = 'community_streamflow_evaluation_system/state_eval.html' 
-   
-     
+
     def get_context(self, request, *args, **kwargs):
         """
         Create context for the Map Layout view, with an override for the map extents based on stream and weather gauges.
@@ -213,6 +212,7 @@ class State_Eval(MapLayout):
             enddate = enddate.strip('][').split(', ')
             model_id = request.GET.get('model_id')
             model_id = model_id.strip('][').split(', ')
+            # breakpoint()
       
             # USGS stations - from AWS s3
             stations_path = f"GeoJSON/StreamStats_{state_id}_4326.geojson" 
@@ -265,6 +265,7 @@ class State_Eval(MapLayout):
             stations_geojson = json.load(obj.get()['Body']) 
 
             # set the map extend based on the stations
+            # breakpoint()
             gdf = gpd.read_file(obj.get()['Body'], driver='GeoJSON')
             map_view['view']['extent'] = list(gdf.geometry.total_bounds)
         
@@ -346,12 +347,17 @@ class State_Eval(MapLayout):
 
         # Get the feature ids, add start/end date, and model as features in geojson above to have here.
         id = feature_props.get('id') #we could connect the hydrofabric in here for NWM v3.0
-        NHD_id = feature_props.get('NHD_id') 
+        NHD_id = feature_props.get('NHD_id')
         state = feature_props.get('state')
-        startdate= feature_props.get('startdate')
-        enddate = feature_props.get('enddate')
-        model_id = feature_props.get('model_id')
-  
+
+        # startdate= feature_props.get('startdate')
+        # enddate = feature_props.get('enddate')
+        # model_id = feature_props.get('model_id')
+        
+        startdate = request.session.get('start_date', '')
+        enddate = request.session.get('end_date', '')
+        model_id = request.session.get('model_id', '')
+        # breakpoint()
         # USGS observed flow
         if layer_name == 'USGS Stations':
             layout = {
@@ -398,7 +404,7 @@ class State_Eval(MapLayout):
 
                 #calculate model skill
                 r2 = round(r2_score(USGS_streamflow_cfs, Mod_streamflow_cfs),2)
-                rmse = round(mean_squared_error(USGS_streamflow_cfs, Mod_streamflow_cfs, squared=False),0)
+                rmse = round(root_mean_squared_error(USGS_streamflow_cfs, Mod_streamflow_cfs),0)
                 maxerror = round(max_error(USGS_streamflow_cfs, Mod_streamflow_cfs),0)
                 MAPE = round(mean_absolute_percentage_error(USGS_streamflow_cfs, Mod_streamflow_cfs)*100,0)
                 kge, r, alpha, beta = he.evaluator(he.kge,USGS_streamflow_cfs,Mod_streamflow_cfs)
@@ -428,7 +434,7 @@ class State_Eval(MapLayout):
                     },
                 ]
                 
-
+                print(f"Model: {model_id} RMSE: {rmse} cfs KGE: {kge} MaxError: {maxerror} cfs")
                 return f"{model_id} and Observed Streamflow at USGS site: {id} <br> RMSE: {rmse} cfs <br> KGE: {kge} <br> MaxError: {maxerror} cfs", data, layout
             
             except:
@@ -453,7 +459,7 @@ class State_Eval(MapLayout):
 
                 #calculate model skill
                 r2 = round(r2_score(USGS_streamflow_cfs, Mod_streamflow_cfs),2)
-                rmse = round(mean_squared_error(USGS_streamflow_cfs, Mod_streamflow_cfs, squared=False),0)
+                rmse = round(root_mean_squared_error(USGS_streamflow_cfs, Mod_streamflow_cfs),0)
                 maxerror = round(max_error(USGS_streamflow_cfs, Mod_streamflow_cfs),0)
                 MAPE = round(mean_absolute_percentage_error(USGS_streamflow_cfs, Mod_streamflow_cfs)*100,0)
                 kge, r, alpha, beta = he.evaluator(he.kge,USGS_streamflow_cfs,Mod_streamflow_cfs)
@@ -486,5 +492,22 @@ class State_Eval(MapLayout):
                 return f'Default Configuration:{model} Observed Streamflow at USGS site: {id} <br> RMSE: {rmse} cfs <br> KGE: {kge} <br> MaxError: {maxerror} cfs', data, layout
             
             
+    def update_state_eval_data(self, request, *args, **kwargs):
+        """Respond to AJAX calls from the map page."""
+        # breakpoint()
+        data = request.POST or request.json()
+        request.session['model_id'] = data.get('model_id')
+        request.session['start_date'] = data.get('start_date')
+        request.session['end_date'] = data.get('end_date')
+        request.session['state_id'] = data.get('state_id')
+
+        response_data = {
+
+        }
+        
+        # make a popup to show
+        messages.success(request, "The map has been updated with the new data.")
+        return JsonResponse({'success': True, 'message': 'Data updated', 'data': response_data})
+
 
 

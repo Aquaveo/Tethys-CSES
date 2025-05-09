@@ -17,7 +17,7 @@ os.environ['AWS_NO_SIGN_REQUEST'] = 'YES'
 
 #Model evaluation metrics
 from sklearn.metrics import r2_score
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import root_mean_squared_error
 from sklearn.metrics import max_error
 from sklearn.metrics import mean_absolute_percentage_error
 import hydroeval as he
@@ -355,7 +355,7 @@ class Reach_Eval(MapLayout):
 
                 #calculate model skill
                 r2 = round(r2_score(USGS_streamflow_cfs, Mod_streamflow_cfs),2)
-                rmse = round(mean_squared_error(USGS_streamflow_cfs, Mod_streamflow_cfs, squared=False),0)
+                rmse = round(root_mean_squared_error(USGS_streamflow_cfs, Mod_streamflow_cfs),0)
                 maxerror = round(max_error(USGS_streamflow_cfs, Mod_streamflow_cfs),0)
                 MAPE = round(mean_absolute_percentage_error(USGS_streamflow_cfs, Mod_streamflow_cfs)*100,0)
                 kge, r, alpha, beta = he.evaluator(he.kge,USGS_streamflow_cfs,Mod_streamflow_cfs)
@@ -410,7 +410,7 @@ class Reach_Eval(MapLayout):
 
                 #calculate model skill
                 r2 = round(r2_score(USGS_streamflow_cfs, Mod_streamflow_cfs),2)
-                rmse = round(mean_squared_error(USGS_streamflow_cfs, Mod_streamflow_cfs, squared=False),0)
+                rmse = round(root_mean_squared_error(USGS_streamflow_cfs, Mod_streamflow_cfs),0)
                 maxerror = round(max_error(USGS_streamflow_cfs, Mod_streamflow_cfs),0)
                 MAPE = round(mean_absolute_percentage_error(USGS_streamflow_cfs, Mod_streamflow_cfs)*100,0)
                 kge, r, alpha, beta = he.evaluator(he.kge,USGS_streamflow_cfs,Mod_streamflow_cfs)
