@@ -4,7 +4,7 @@
 
 {% block after_nav_header %}
   {{ block.super }}
-    <form id="huc-eval-form"
+    <form id="reach-eval-form"
         action="{% url 'community_streamflow_evaluation_system:reach_eval' %}"
         method="post">
         {% csrf_token %}
