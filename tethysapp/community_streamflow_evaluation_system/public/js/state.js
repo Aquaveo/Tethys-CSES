@@ -9,6 +9,15 @@ function getCookie(name) {
 }
 const csrftoken = getCookie('csrftoken');     // same-origin only
 
+const inject_map_data = (layer, metdata) => {
+    layer.tethys_legend_title = metdata.legend_title;
+    layer.tethys_legend_classes = metdata.legend_classes;
+    layer.tethys_legend_extent = metdata.legend_extent;
+    layer.tethys_legend_extent_projection = metdata.legend_extent_projection;
+    layer.tethys_editable = metdata.editable;
+    layer.tethys_data = metdata.data;
+}
+
 // ----- Event handler attached in <script> tag -----
 document.getElementById('state-eval-form').addEventListener('submit', updateData);
 
@@ -43,14 +52,17 @@ function updateData(event) {
 
     olMap.getLayers().forEach(layer => {
         if (layer instanceof ol.layer.Vector) {
+          console.log('Updating layer:', layer);
             const features = new ol.format.GeoJSON().readFeatures(
                 data.geojson,
                 { dataProjection: 'EPSG:4326', featureProjection: mapProj }
             );
-            const src = layer.getSource();
-            src.clear(true);
-            src.addFeatures(features);
-            const extent = src.getExtent();
+            const newSource = new ol.source.Vector({
+              features: features
+            });
+            layer.setSource(newSource);
+            const extent = newSource.getExtent();
+            inject_map_data(layer, data.metadata);
             if (!ol.extent.isEmpty(extent)) {
                 olMap.getView().fit(extent, { padding: [40, 40, 40, 40], duration: 500 });
             }   

@@ -23,17 +23,6 @@
   <p>Date ranges &gt; 450 days may not load.</p>
 {% endblock %}
 
-{% block after_app_content %}
-  {{ block.super }}
-  {% if messages %}
-  <ul class="messages">
-      {% for message in messages %}
-      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-      {% endfor %}
-  </ul>
-  {% endif %}
-
-{% endblock %}
 
 
 {% block scripts %}
