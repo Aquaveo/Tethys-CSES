@@ -408,13 +408,6 @@ class HUC_Eval(MapLayout):
                 }
             }  
 
-            #USGS observed flow
-            # USGS_directory = f"NWIS/NWIS_sites_{state}.h5/NWIS_{id}.csv"
-            # obj = BUCKET.Object(USGS_directory)
-            # body = obj.get()['Body']
-            # USGS_df = pd.read_csv(body)
-            # USGS_df.pop('Unnamed: 0')  
-            
 
             try:
                 USGS_directory = f"NWIS/NWIS_sites_{state}.h5/NWIS_{id}.csv"
@@ -444,9 +437,7 @@ class HUC_Eval(MapLayout):
                 modelcols = model_df.columns.to_list()[-2:]
                 model_df = model_df[modelcols]
 
-                 #combine Dfs, remove nans
-                # USGS_df.drop_duplicates(subset=['Datetime'], inplace=True)
-                # USGS_df.set_index('Datetime', inplace = True, drop = True)
+                #combine Dfs, remove nans
                 model_df.drop_duplicates(subset=['Datetime'],  inplace=True)
                 model_df.set_index('Datetime', inplace = True, drop = True)
                 DF = pd.concat([USGS_df, model_df], axis = 1, join = 'inner')
@@ -460,10 +451,8 @@ class HUC_Eval(MapLayout):
                 Mod_streamflow_cfs = DF[f"{model_id[:3]}_flow"].to_list()#limited to less than 500 obs/days
 
                 #calculate model skill
-                # r2 = round(r2_score(USGS_streamflow_cfs, Mod_streamflow_cfs),2)
                 rmse = round(root_mean_squared_error(USGS_streamflow_cfs, Mod_streamflow_cfs),0)
                 maxerror = round(max_error(USGS_streamflow_cfs, Mod_streamflow_cfs),0)
-                # MAPE = round(mean_absolute_percentage_error(USGS_streamflow_cfs, Mod_streamflow_cfs)*100,0)
                 kge, r, alpha, beta = he.evaluator(he.kge,USGS_streamflow_cfs,Mod_streamflow_cfs)
                 kge = round(kge[0],2)
  
@@ -492,7 +481,8 @@ class HUC_Eval(MapLayout):
                 ]
                 
 
-                return f"{model_id} and Observed Streamflow at USGS site: {id} <br> RMSE: {rmse} cfs <br> KGE: {kge} <br> MaxError: {maxerror} cfs", data, layout
+                
+                return f'{model_id} and Observed Streamflow at USGS site: {id} <p style="font-size:20px;"> RMSE: {rmse}</p> cfs <p style="font-size:20px;"> KGE: {kge} </p> <p style="font-size:20px;"> MaxError: {maxerror} cfs </p>', data, layout
             
             except:
                 print("No user inputs, default configuration.")
@@ -546,8 +536,7 @@ class HUC_Eval(MapLayout):
                     },
                 ]
 
-
-                return f'Default Configuration:{model} Observed Streamflow at USGS site: {id} <br> RMSE: {rmse} cfs <br> KGE: {kge} <br> MaxError: {maxerror} cfs', data, layout
+                return f'Default Configuration:{model} Observed Streamflow at USGS site: {id} <p style="font-size:20px;"> RMSE: {rmse} cfs </p> <p style="font-size:20px;">KGE: {kge}</p> <p style="font-size:20px;">MaxError: {maxerror} cfs</p>', data, layout
             
     def update_huc_eval_data(self, request, *args, **kwargs):
         """Respond to AJAX calls from the map page."""
@@ -559,30 +548,60 @@ class HUC_Eval(MapLayout):
 
         huc_id = request.session['huc_ids']
         huc_id = huc_id.strip('][').split(', ')
+        try:
+            finaldf = self.Join_WBD_StreamStats(huc_id) #for future work, building a lookup table/dictionary would be much faster!
 
-        finaldf = self.Join_WBD_StreamStats(huc_id) #for future work, building a lookup table/dictionary would be much faster!
+            '''
+            This might be the correct location to determine model performance, this will determine icon color as a part of the geojson file below
+            We can also speed up the app by putting all model preds into one csv per state and all obs in one csv per state. - load one file vs multiple.
+            '''
 
-        '''
-        This might be the correct location to determine model performance, this will determine icon color as a part of the geojson file below
-        We can also speed up the app by putting all model preds into one csv per state and all obs in one csv per state. - load one file vs multiple.
-        '''
+            startdate= request.session['start_date']
+            enddate = request.session['end_date']
+            model_id = request.session['model_id']
 
-        startdate= request.session['start_date']
-        enddate = request.session['end_date']
-        model_id = request.session['model_id']
+            
+            
+            #update json with start/end date, modelid to support click, adjustment in the get_plot_for_layer_feature()
+            finaldf['startdate'] = datetime.strptime(startdate, '%m-%d-%Y').strftime('%Y-%m-%d')
+            finaldf['enddate'] = datetime.strptime(enddate, '%m-%d-%Y').strftime('%Y-%m-%d')
+            finaldf['model_id'] = model_id[0]
+            
+            #convert back to geojson
+            stations_geojson = json.loads(finaldf.to_json()) 
+            stations_geojson.update({"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" }}})
 
-        
-        
-        #update json with start/end date, modelid to support click, adjustment in the get_plot_for_layer_feature()
-        finaldf['startdate'] = datetime.strptime(startdate, '%m-%d-%Y').strftime('%Y-%m-%d')
-        finaldf['enddate'] = datetime.strptime(enddate, '%m-%d-%Y').strftime('%Y-%m-%d')
-        finaldf['model_id'] = model_id[0]
-        
-        #convert back to geojson
-        stations_geojson = json.loads(finaldf.to_json()) 
-        stations_geojson.update({"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" }}})
+            stations_layer = self.build_geojson_layer(
+                    geojson=stations_geojson,
+                    layer_name='USGS Stations',
+                    layer_title='USGS Station',
+                    layer_variable='stations',
+                    visible=True,
+                    selectable=True,
+                    plottable=True,
+        )
+        except:
+            print('No inputs, going to defaults')
+            #put in some defaults
+            reach_ids = ['10171000', '10166430', '10168000','10164500', '10163000', '10157500','10155500', '10156000', 
+                         '10155200', '10155000', '10154200', '10153100', '10150500', '10149400', '10149000', '10147100', 
+                         '10146400', '10145400', '10172700' ] # These are sites within the Jordan River Watershed
+            startdate = '01-01-2019' 
+            enddate = '01-02-2019'
+            modelid = 'NWM_v2.1'
 
-        stations_layer = self.build_geojson_layer(
+            finaldf = reach_json(reach_ids,BUCKET, BUCKET_NAME, S3)
+
+            '''
+            This might be the correct location to determine model performance, this will determine icon color as a part of the geojson file below
+            We can also speed up the app by putting all model preds into one csv per state and all obs in one csv per state. - load one file vs multiple.
+            '''
+
+            stations_geojson = json.loads(finaldf.to_json()) 
+            stations_geojson.update({"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" }}}) 
+
+
+            stations_layer = self.build_geojson_layer(
                 geojson=stations_geojson,
                 layer_name='USGS Stations',
                 layer_title='USGS Station',
@@ -590,6 +609,7 @@ class HUC_Eval(MapLayout):
                 visible=True,
                 selectable=True,
                 plottable=True,
-        )
+            ) 
+
         
         return JsonResponse({'success': True, 'message': 'Data updated','metadata': stations_layer ,'geojson': stations_geojson})

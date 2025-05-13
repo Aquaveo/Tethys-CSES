@@ -265,7 +265,6 @@ class State_Eval(MapLayout):
             stations_geojson = json.load(obj.get()['Body']) 
 
             # set the map extend based on the stations
-            # breakpoint()
             gdf = gpd.read_file(obj.get()['Body'])
             map_view['view']['extent'] = list(gdf.geometry.total_bounds)
         
@@ -350,10 +349,7 @@ class State_Eval(MapLayout):
         NHD_id = feature_props.get('NHD_id')
         state = feature_props.get('state')
 
-        # startdate= feature_props.get('startdate')
-        # enddate = feature_props.get('enddate')
-        # model_id = feature_props.get('model_id')
-        
+
         startdate = request.session.get('start_date', '')
         enddate = request.session.get('end_date', '')
         model_id = request.session.get('model_id', '')
@@ -416,10 +412,8 @@ class State_Eval(MapLayout):
 
                 #calculate model skill
                 print(USGS_streamflow_cfs)
-                # r2 = round(r2_score(USGS_streamflow_cfs, Mod_streamflow_cfs),2)
                 rmse = round(root_mean_squared_error(USGS_streamflow_cfs, Mod_streamflow_cfs),0)
                 maxerror = round(max_error(USGS_streamflow_cfs, Mod_streamflow_cfs),0)
-                # MAPE = round(mean_absolute_percentage_error(USGS_streamflow_cfs, Mod_streamflow_cfs)*100,0)
                 kge, r, alpha, beta = he.evaluator(he.kge,USGS_streamflow_cfs,Mod_streamflow_cfs)
                 kge = round(kge[0],2)
  
@@ -447,8 +441,7 @@ class State_Eval(MapLayout):
                     },
                 ]
                 
-                print(f"Model: {model_id} RMSE: {rmse} cfs KGE: {kge} MaxError: {maxerror} cfs")
-                return f"{model_id} and Observed Streamflow at USGS site: {id} <br> RMSE: {rmse} cfs <br> KGE: {kge} <br> MaxError: {maxerror} cfs", data, layout
+                return f'{model_id} and Observed Streamflow at USGS site: {id} <p style="font-size:20px;"> RMSE: {rmse}</p> cfs <p style="font-size:20px;"> KGE: {kge} </p> <p style="font-size:20px;"> MaxError: {maxerror} cfs </p>', data, layout
             
             except:
                 print("No user inputs, default configuration.")
@@ -459,12 +452,8 @@ class State_Eval(MapLayout):
                 model_df = pd.read_csv(body)
                 model_df.pop('Unnamed: 0')
                 #combine Dfs, remove nans
-                # USGS_df.reset_index(inplace=True)
-                # USGS_df.drop_duplicates(subset=['Datetime'], inplace=True)
                 
-                # USGS_df.drop_duplicates(subset=['Datetime'], inplace=True)
                 model_df.drop_duplicates(subset=['Datetime'],  inplace=True)
-                # USGS_df.set_index('Datetime', inplace = True)
                 model_df.set_index('Datetime', inplace = True)
                 DF = pd.concat([USGS_df, model_df], axis = 1, join = 'inner')
                 DF.reset_index(inplace=True)
@@ -476,10 +465,8 @@ class State_Eval(MapLayout):
                 #calculate model skill
                 print(USGS_streamflow_cfs)
                 
-                # r2 = round(r2_score(USGS_streamflow_cfs, Mod_streamflow_cfs),2)
                 rmse = round(root_mean_squared_error(USGS_streamflow_cfs, Mod_streamflow_cfs),0)
                 maxerror = round(max_error(USGS_streamflow_cfs, Mod_streamflow_cfs),0)
-                # MAPE = round(mean_absolute_percentage_error(USGS_streamflow_cfs, Mod_streamflow_cfs)*100,0)
                 kge, r, alpha, beta = he.evaluator(he.kge,USGS_streamflow_cfs,Mod_streamflow_cfs)
                 kge = round(kge[0],2)
 
@@ -506,8 +493,7 @@ class State_Eval(MapLayout):
                     },
                 ]
 
-
-                return f'Default Configuration: {model} Observed Streamflow at USGS site: {id} <br> RMSE: {rmse} cfs <br> KGE: {kge} <br> MaxError: {maxerror} cfs', data, layout
+                return f'Default Configuration:{model} Observed Streamflow at USGS site: {id} <p style="font-size:20px;"> RMSE: {rmse} cfs </p> <p style="font-size:20px;">KGE: {kge}</p> <p style="font-size:20px;">MaxError: {maxerror} cfs</p>', data, layout
             
     
     def update_state_eval_data(self, request, *args, **kwargs):
@@ -517,10 +503,26 @@ class State_Eval(MapLayout):
         request.session['start_date'] = data.get('start_date')
         request.session['end_date'] = data.get('end_date')
         request.session['state_id'] = data.get('state_id')
-        stations_path = f"GeoJSON/StreamStats_{data.get('state_id')}_4326.geojson"
-        obj = S3.Object(BUCKET_NAME, stations_path)
-        stations_geojson = json.load(obj.get()['Body'])
-        stations_layer = self.build_geojson_layer(
+        try:
+            stations_path = f"GeoJSON/StreamStats_{data.get('state_id')}_4326.geojson"
+            obj = S3.Object(BUCKET_NAME, stations_path)
+            stations_geojson = json.load(obj.get()['Body'])
+            stations_layer = self.build_geojson_layer(
+                    geojson=stations_geojson,
+                    layer_name='USGS Stations',
+                    layer_title='USGS Station',
+                    layer_variable='stations',
+                    visible=True,
+                    selectable=True,
+                    plottable=True,
+            )
+        except:
+            state_id = 'AL'
+            # USGS stations - from AWS s3
+            stations_path = f"GeoJSON/StreamStats_{state_id}_4326.geojson" #will need to change the filename to have state before 4326
+            obj = S3.Object(BUCKET_NAME, stations_path)
+            stations_geojson = json.load(obj.get()['Body'])
+            stations_layer = self.build_geojson_layer(
                 geojson=stations_geojson,
                 layer_name='USGS Stations',
                 layer_title='USGS Station',
@@ -528,8 +530,7 @@ class State_Eval(MapLayout):
                 visible=True,
                 selectable=True,
                 plottable=True,
-        )
-        
+            )
         return JsonResponse({'success': True, 'message': 'Data updated','metadata': stations_layer ,'geojson': stations_geojson})
 
 

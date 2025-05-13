@@ -401,8 +401,7 @@ class Reach_Eval(MapLayout):
                 ]
                 
 
-                return f"{model_id} and Observed Streamflow at USGS site: {id} <br> RMSE: {rmse} cfs <br> KGE: {kge} <br> MaxError: {maxerror} cfs", data, layout
-            
+                return f'{model_id} and Observed Streamflow at USGS site: {id} <p style="font-size:20px;"> RMSE: {rmse}</p> cfs <p style="font-size:20px;"> KGE: {kge} </p> <p style="font-size:20px;"> MaxError: {maxerror} cfs </p>', data, layout
             except:
                 print("No user inputs, default configuration.")
                 model = 'NWM_v2.1'
@@ -425,10 +424,10 @@ class Reach_Eval(MapLayout):
                 Mod_streamflow_cfs = DF[f"{model[:3]}_flow"].to_list()[:45]
 
                 #calculate model skill
-                r2 = round(r2_score(USGS_streamflow_cfs, Mod_streamflow_cfs),2)
+                # r2 = round(r2_score(USGS_streamflow_cfs, Mod_streamflow_cfs),2)
                 rmse = round(root_mean_squared_error(USGS_streamflow_cfs, Mod_streamflow_cfs),0)
                 maxerror = round(max_error(USGS_streamflow_cfs, Mod_streamflow_cfs),0)
-                MAPE = round(mean_absolute_percentage_error(USGS_streamflow_cfs, Mod_streamflow_cfs)*100,0)
+                # MAPE = round(mean_absolute_percentage_error(USGS_streamflow_cfs, Mod_streamflow_cfs)*100,0)
                 kge, r, alpha, beta = he.evaluator(he.kge,USGS_streamflow_cfs,Mod_streamflow_cfs)
                 kge = round(kge[0],2)
 
@@ -456,7 +455,7 @@ class Reach_Eval(MapLayout):
                 ]
 
 
-                return f'Default Configuration:{model} Observed Streamflow at USGS site: {id} <br> RMSE: {rmse} cfs <br> KGE: {kge} <br> MaxError: {maxerror} cfs', data, layout
+                return f'Default Configuration:{model} Observed Streamflow at USGS site: {id} <p style="font-size:20px;"> RMSE: {rmse} cfs </p> <p style="font-size:20px;">KGE: {kge}</p> <p style="font-size:20px;">MaxError: {maxerror} cfs</p>', data, layout
             
     def update_reach_eval_data(self, request, *args, **kwargs):
         """Respond to AJAX calls from the map page."""
