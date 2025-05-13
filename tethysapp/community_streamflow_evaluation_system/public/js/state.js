@@ -18,14 +18,17 @@ const inject_map_data = (layer, metdata) => {
     layer.tethys_data = metdata.data;
 }
 
-// ----- Event handler attached in <script> tag -----
 document.getElementById('state-eval-form').addEventListener('submit', updateData);
 
 function updateData(event) {
-    console.log('updateData() called');
 
-    event.preventDefault();                     // stop normal navigation
-   let start_date = document.getElementById("start-date").value
+    event.preventDefault();
+    // Show loading message
+    const loadingDiv = document.querySelector('.loading-text');
+    loadingDiv.style.display = 'block';
+
+
+    let start_date = document.getElementById("start-date").value
     let end_date = document.getElementById("end-date").value
     let state_id = document.getElementById("state_id").value
     let model_id = document.getElementById("model_id").value
@@ -69,5 +72,9 @@ function updateData(event) {
         }
     });
   })
-  .catch(err => console.error('REST call failed:', err));
+  .catch(err => console.error('REST call failed:', err))
+  .finally(() => {
+    // Hide loading message when finished
+    loadingDiv.style.display = 'none';
+  });
 }

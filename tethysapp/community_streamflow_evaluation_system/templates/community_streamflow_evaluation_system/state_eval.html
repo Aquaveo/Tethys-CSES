@@ -14,12 +14,16 @@
     <div>{% gizmo SelectInput model_id %}</div>
     <div>{% gizmo date_picker start_date_picker %}</div>
     <div>{% gizmo date_picker end_date_picker %}</div>
-
+    <br/>
     <button type="submit" class="btn btn-success">
       <span class="glyphicon glyphicon-play"></span> Update Map
     </button>
   </form>
-
+    <br/>
+    <div class="loading-text" style="display:none;">
+        <p>Loading Data...</p>
+    </div>
+    <br/>
   <p>Date ranges &gt; 450 days may not load.</p>
 {% endblock %}
 

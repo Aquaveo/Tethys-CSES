@@ -219,7 +219,7 @@ class State_Eval(MapLayout):
             obj = S3.Object(BUCKET_NAME, stations_path)
 
             # set the map extend based on the stations
-            gdf = gpd.read_file(obj.get()['Body'], driver='GeoJSON')
+            gdf = gpd.read_file(obj.get()['Body'])
             map_view['view']['extent'] = list(gdf.geometry.total_bounds)
 
             #update json with start/end date, modelid to support click, adjustment in the get_plot_for_layer_feature()
@@ -266,7 +266,7 @@ class State_Eval(MapLayout):
 
             # set the map extend based on the stations
             # breakpoint()
-            gdf = gpd.read_file(obj.get()['Body'], driver='GeoJSON')
+            gdf = gpd.read_file(obj.get()['Body'])
             map_view['view']['extent'] = list(gdf.geometry.total_bounds)
         
 
@@ -529,7 +529,7 @@ class State_Eval(MapLayout):
                 selectable=True,
                 plottable=True,
         )
-        messages.success(request, "The map has been updated with the new data.")
+        
         return JsonResponse({'success': True, 'message': 'Data updated','metadata': stations_layer ,'geojson': stations_geojson})
 
 
