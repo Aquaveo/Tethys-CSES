@@ -257,18 +257,23 @@ class State_Eval(MapLayout):
         except: 
             #Default state id to initiat mapping
             print('No useable inputs, default mapping')
-            state_id = 'AL'
+
+            # state_id = 'AL'
     
-            # USGS stations - from AWS s3
-            stations_path = f"GeoJSON/StreamStats_{state_id}_4326.geojson" #will need to change the filename to have state before 4326
-            obj = S3.Object(BUCKET_NAME, stations_path)
-            stations_geojson = json.load(obj.get()['Body']) 
+            # # USGS stations - from AWS s3
+            # stations_path = f"GeoJSON/StreamStats_{state_id}_4326.geojson" #will need to change the filename to have state before 4326
+            # obj = S3.Object(BUCKET_NAME, stations_path)
+            # stations_geojson = json.load(obj.get()['Body']) 
 
-            # set the map extend based on the stations
-            gdf = gpd.read_file(obj.get()['Body'])
-            map_view['view']['extent'] = list(gdf.geometry.total_bounds)
+            # # set the map extend based on the stations
+            # gdf = gpd.read_file(obj.get()['Body'])
+            # map_view['view']['extent'] = list(gdf.geometry.total_bounds)
         
-
+            stations_geojson = {
+                "type": "FeatureCollection",
+                "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+                "features": []
+            }
             stations_layer = self.build_geojson_layer(
                 geojson=stations_geojson,
                 layer_name='USGS Stations',
@@ -441,7 +446,7 @@ class State_Eval(MapLayout):
                     },
                 ]
                 
-                return f'{model_id} and Observed Streamflow at USGS site: {id} <p style="font-size:20px;"> RMSE: {rmse}</p> cfs <p style="font-size:20px;"> KGE: {kge} </p> <p style="font-size:20px;"> MaxError: {maxerror} cfs </p>', data, layout
+                return f'{model_id} and Observed Streamflow at USGS site: {id} <p style="font-size:15px;margin-bottom: 0px;margin-bottom: 0px;"> RMSE: {rmse}</p> cfs <p style="font-size:15px;margin-bottom: 0px;margin-bottom: 0px;"> KGE: {kge} </p> <p style="font-size:15px;margin-bottom: 0px;margin-bottom: 0px;"> MaxError: {maxerror} cfs </p>', data, layout
             
             except:
                 print("No user inputs, default configuration.")
@@ -493,7 +498,7 @@ class State_Eval(MapLayout):
                     },
                 ]
 
-                return f'Default Configuration:{model} Observed Streamflow at USGS site: {id} <p style="font-size:20px;"> RMSE: {rmse} cfs </p> <p style="font-size:20px;">KGE: {kge}</p> <p style="font-size:20px;">MaxError: {maxerror} cfs</p>', data, layout
+                return f'Default Configuration:{model} Observed Streamflow at USGS site: {id} <p style="font-size:15px;margin-bottom: 0px;"> RMSE: {rmse} cfs </p> <p style="font-size:15px;margin-bottom: 0px;">KGE: {kge}</p> <p style="font-size:15px;margin-bottom: 0px;">MaxError: {maxerror} cfs</p>', data, layout
             
     
     def update_state_eval_data(self, request, *args, **kwargs):
@@ -516,12 +521,19 @@ class State_Eval(MapLayout):
                     selectable=True,
                     plottable=True,
             )
+            msg = f'Updated data for State: {data.get("state_id")}'
         except:
-            state_id = 'AL'
+            # state_id = 'AL'
             # USGS stations - from AWS s3
-            stations_path = f"GeoJSON/StreamStats_{state_id}_4326.geojson" #will need to change the filename to have state before 4326
-            obj = S3.Object(BUCKET_NAME, stations_path)
-            stations_geojson = json.load(obj.get()['Body'])
+            # stations_path = f"GeoJSON/StreamStats_{state_id}_4326.geojson" #will need to change the filename to have state before 4326
+            # obj = S3.Object(BUCKET_NAME, stations_path)
+            # stations_geojson = json.load(obj.get()['Body'])
+            stations_geojson = {
+                "type": "FeatureCollection",
+                "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+                "features": []
+            }
+
             stations_layer = self.build_geojson_layer(
                 geojson=stations_geojson,
                 layer_name='USGS Stations',
@@ -531,7 +543,8 @@ class State_Eval(MapLayout):
                 selectable=True,
                 plottable=True,
             )
-        return JsonResponse({'success': True, 'message': 'Data updated','metadata': stations_layer ,'geojson': stations_geojson})
+            msg = f'No data available for this HUC {request.session['state_id']}, please try another HUC or check your inputs.'
+        return JsonResponse({'success': True, 'message': msg,'metadata': stations_layer ,'geojson': stations_geojson})
 
 
 

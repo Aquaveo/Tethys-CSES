@@ -292,27 +292,31 @@ class HUC_Eval(MapLayout):
             ]
 
         except: 
-            print('No inputs, going to defaults')
-            #put in some defaults
-            reach_ids = ['10171000', '10166430', '10168000','10164500', '10163000', '10157500','10155500', '10156000', 
-                         '10155200', '10155000', '10154200', '10153100', '10150500', '10149400', '10149000', '10147100', 
-                         '10146400', '10145400', '10172700' ] # These are sites within the Jordan River Watershed
-            startdate = '01-01-2019' 
-            enddate = '01-02-2019'
-            modelid = 'NWM_v2.1'
+            # print('No inputs, going to defaults')
+            # #put in some defaults
+            # reach_ids = ['10171000', '10166430', '10168000','10164500', '10163000', '10157500','10155500', '10156000', 
+            #              '10155200', '10155000', '10154200', '10153100', '10150500', '10149400', '10149000', '10147100', 
+            #              '10146400', '10145400', '10172700' ] # These are sites within the Jordan River Watershed
+            # startdate = '01-01-2019' 
+            # enddate = '01-02-2019'
+            # modelid = 'NWM_v2.1'
 
-            finaldf = reach_json(reach_ids,BUCKET, BUCKET_NAME, S3)
+            # finaldf = reach_json(reach_ids,BUCKET, BUCKET_NAME, S3)
 
-            '''
-            This might be the correct location to determine model performance, this will determine icon color as a part of the geojson file below
-            We can also speed up the app by putting all model preds into one csv per state and all obs in one csv per state. - load one file vs multiple.
-            '''
+            # '''
+            # This might be the correct location to determine model performance, this will determine icon color as a part of the geojson file below
+            # We can also speed up the app by putting all model preds into one csv per state and all obs in one csv per state. - load one file vs multiple.
+            # '''
 
-            map_view['view']['extent'] = list(finaldf.geometry.total_bounds)
-            stations_geojson = json.loads(finaldf.to_json()) 
-            stations_geojson.update({"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" }}}) 
+            # map_view['view']['extent'] = list(finaldf.geometry.total_bounds)
+            # stations_geojson = json.loads(finaldf.to_json()) 
+            # stations_geojson.update({"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" }}}) 
 
-
+            stations_geojson = {
+                "type": "FeatureCollection",
+                "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+                "features": []
+            }
             stations_layer = self.build_geojson_layer(
                 geojson=stations_geojson,
                 layer_name='USGS Stations',
@@ -482,7 +486,7 @@ class HUC_Eval(MapLayout):
                 
 
                 
-                return f'{model_id} and Observed Streamflow at USGS site: {id} <p style="font-size:20px;"> RMSE: {rmse}</p> cfs <p style="font-size:20px;"> KGE: {kge} </p> <p style="font-size:20px;"> MaxError: {maxerror} cfs </p>', data, layout
+                return f'{model_id} and Observed Streamflow at USGS site: {id} <p style="font-size:15px;margin-bottom: 0px;"> RMSE: {rmse}</p> cfs <p style="font-size:15px;margin-bottom: 0px;"> KGE: {kge} </p> <p style="font-size:15px;margin-bottom: 0px;"> MaxError: {maxerror} cfs </p>', data, layout
             
             except:
                 print("No user inputs, default configuration.")
@@ -536,7 +540,7 @@ class HUC_Eval(MapLayout):
                     },
                 ]
 
-                return f'Default Configuration:{model} Observed Streamflow at USGS site: {id} <p style="font-size:20px;"> RMSE: {rmse} cfs </p> <p style="font-size:20px;">KGE: {kge}</p> <p style="font-size:20px;">MaxError: {maxerror} cfs</p>', data, layout
+                return f'Default Configuration:{model} Observed Streamflow at USGS site: {id} <p style="font-size:15px;margin-bottom: 0px;"> RMSE: {rmse} cfs </p> <p style="font-size:15px;margin-bottom: 0px;">KGE: {kge}</p> <p style="font-size:15px;margin-bottom: 0px;">MaxError: {maxerror} cfs</p>', data, layout
             
     def update_huc_eval_data(self, request, *args, **kwargs):
         """Respond to AJAX calls from the map page."""
@@ -579,27 +583,32 @@ class HUC_Eval(MapLayout):
                     visible=True,
                     selectable=True,
                     plottable=True,
-        )
+            )
+            msg = f'Updated data for HUC {huc_id}.'
         except:
             print('No inputs, going to defaults')
             #put in some defaults
-            reach_ids = ['10171000', '10166430', '10168000','10164500', '10163000', '10157500','10155500', '10156000', 
-                         '10155200', '10155000', '10154200', '10153100', '10150500', '10149400', '10149000', '10147100', 
-                         '10146400', '10145400', '10172700' ] # These are sites within the Jordan River Watershed
-            startdate = '01-01-2019' 
-            enddate = '01-02-2019'
-            modelid = 'NWM_v2.1'
+            # reach_ids = ['10171000', '10166430', '10168000','10164500', '10163000', '10157500','10155500', '10156000', 
+            #              '10155200', '10155000', '10154200', '10153100', '10150500', '10149400', '10149000', '10147100', 
+            #              '10146400', '10145400', '10172700' ] # These are sites within the Jordan River Watershed
+            # startdate = '01-01-2019' 
+            # enddate = '01-02-2019'
+            # modelid = 'NWM_v2.1'
 
-            finaldf = reach_json(reach_ids,BUCKET, BUCKET_NAME, S3)
+            # finaldf = reach_json(reach_ids,BUCKET, BUCKET_NAME, S3)
 
-            '''
-            This might be the correct location to determine model performance, this will determine icon color as a part of the geojson file below
-            We can also speed up the app by putting all model preds into one csv per state and all obs in one csv per state. - load one file vs multiple.
-            '''
+            # '''
+            # This might be the correct location to determine model performance, this will determine icon color as a part of the geojson file below
+            # We can also speed up the app by putting all model preds into one csv per state and all obs in one csv per state. - load one file vs multiple.
+            # '''
 
-            stations_geojson = json.loads(finaldf.to_json()) 
-            stations_geojson.update({"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" }}}) 
-
+            # stations_geojson = json.loads(finaldf.to_json()) 
+            # stations_geojson.update({"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" }}}) 
+            stations_geojson = {
+                "type": "FeatureCollection",
+                "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+                "features": []
+            }
 
             stations_layer = self.build_geojson_layer(
                 geojson=stations_geojson,
@@ -610,6 +619,6 @@ class HUC_Eval(MapLayout):
                 selectable=True,
                 plottable=True,
             ) 
-
+            msg = f'No data available for this HUC, please try another HUC or check your inputs.'
         
-        return JsonResponse({'success': True, 'message': 'Data updated','metadata': stations_layer ,'geojson': stations_geojson})
+        return JsonResponse({'success': True, 'message': msg,'metadata': stations_layer ,'geojson': stations_geojson})

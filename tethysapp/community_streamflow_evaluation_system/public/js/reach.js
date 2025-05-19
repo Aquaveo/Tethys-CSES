@@ -68,10 +68,11 @@ function updateData(event) {
         }   
       }
     });
+    loadingDiv.innerHTML = data.message;
   })
-  .catch(err => console.error('REST call failed:', err))
-  .finally(() => {
-    // Hide loading message when finished
+  
+  .catch((err) => {
     loadingDiv.style.display = 'none';
-  });
+    console.error('REST call failed:', err)}
+  )
 }

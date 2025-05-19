@@ -114,9 +114,9 @@ class Reach_Eval(MapLayout):
             initial='06-11-2019'
         )
         
-        reach_ids = TextInput(display_text='Enter a list of USGS sites',
+        reach_ids = TextInput(display_text='Enter a USGS site',
                                    name='reach_ids', 
-                                   placeholder= 'e.g.: 10224000, 10219000',
+                                   placeholder= 'e.g.: 10224000',
                                    )
 
         model_id = SelectInput(display_text='Select Model',
@@ -208,16 +208,20 @@ class Reach_Eval(MapLayout):
 
         except: 
             print('No inputs, going to defaults')
-            #put in some defaults
-            reach_ids = ['10126000', '10068500']
-            startdate = '01-01-2019' 
-            enddate = '01-02-2019'
-            modelid = 'NWM_v2.1'
-            finaldf = reach_json(reach_ids,BUCKET, BUCKET_NAME, S3)
-            map_view['view']['extent'] = list(finaldf.geometry.total_bounds)
-            stations_geojson = json.loads(finaldf.to_json()) 
-            stations_geojson.update({"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" }}}) 
-
+            # #put in some defaults
+            # reach_ids = ['10126000', '10068500']
+            # startdate = '01-01-2019' 
+            # enddate = '01-02-2019'
+            # modelid = 'NWM_v2.1'
+            # finaldf = reach_json(reach_ids,BUCKET, BUCKET_NAME, S3)
+            # map_view['view']['extent'] = list(finaldf.geometry.total_bounds)
+            # stations_geojson = json.loads(finaldf.to_json()) 
+            # stations_geojson.update({"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" }}}) 
+            stations_geojson = {
+                "type": "FeatureCollection",
+                "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+                "features": []
+            }
 
             stations_layer = self.build_geojson_layer(
                 geojson=stations_geojson,
@@ -401,7 +405,7 @@ class Reach_Eval(MapLayout):
                 ]
                 
 
-                return f'{model_id} and Observed Streamflow at USGS site: {id} <p style="font-size:20px;"> RMSE: {rmse}</p> cfs <p style="font-size:20px;"> KGE: {kge} </p> <p style="font-size:20px;"> MaxError: {maxerror} cfs </p>', data, layout
+                return f'{model_id} and Observed Streamflow at USGS site: {id} <p style="font-size:15px;margin-bottom: 0px;"> RMSE: {rmse}</p> cfs <p style="font-size:15px;margin-bottom: 0px;"> KGE: {kge} </p> <p style="font-size:15px;margin-bottom: 0px;"> MaxError: {maxerror} cfs </p>', data, layout
             except:
                 print("No user inputs, default configuration.")
                 model = 'NWM_v2.1'
@@ -455,7 +459,7 @@ class Reach_Eval(MapLayout):
                 ]
 
 
-                return f'Default Configuration:{model} Observed Streamflow at USGS site: {id} <p style="font-size:20px;"> RMSE: {rmse} cfs </p> <p style="font-size:20px;">KGE: {kge}</p> <p style="font-size:20px;">MaxError: {maxerror} cfs</p>', data, layout
+                return f'Default Configuration:{model} Observed Streamflow at USGS site: {id} <p style="font-size:15px;margin-bottom: 0px;"> RMSE: {rmse} cfs </p> <p style="font-size:15px;margin-bottom: 0px;">KGE: {kge}</p> <p style="font-size:15px;margin-bottom: 0px;">MaxError: {maxerror} cfs</p>', data, layout
             
     def update_reach_eval_data(self, request, *args, **kwargs):
         """Respond to AJAX calls from the map page."""
@@ -492,17 +496,22 @@ class Reach_Eval(MapLayout):
                 selectable=True,
                 plottable=True,
             )
+            msg = f"Updated data for the selected reach ID"
         except Exception as e:
             print(f"Error: {e}")
             print('No inputs, going to defaults')
-            #put in some defaults
-            reach_ids = ['10126000', '10068500']
-            startdate = '01-01-2019' 
-            enddate = '01-02-2019'
-            finaldf = reach_json(reach_ids,BUCKET, BUCKET_NAME, S3)
-            stations_geojson = json.loads(finaldf.to_json()) 
-            stations_geojson.update({"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" }}}) 
-
+            # #put in some defaults
+            # reach_ids = ['10126000', '10068500']
+            # startdate = '01-01-2019' 
+            # enddate = '01-02-2019'
+            # finaldf = reach_json(reach_ids,BUCKET, BUCKET_NAME, S3)
+            # stations_geojson = json.loads(finaldf.to_json()) 
+            # stations_geojson.update({"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" }}}) 
+            stations_geojson = {
+                "type": "FeatureCollection",
+                "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+                "features": []
+            }
 
             stations_layer = self.build_geojson_layer(
                 geojson=stations_geojson,
@@ -512,5 +521,6 @@ class Reach_Eval(MapLayout):
                 visible=True,
                 selectable=True,
                 plottable=True,
-            ) 
-        return JsonResponse({'success': True, 'message': 'Data updated','metadata': stations_layer ,'geojson': stations_geojson})            
+            )
+            msg = f"No data available for the selected reach IDs {reach_ids}"
+        return JsonResponse({'success': True, 'message': msg ,'metadata': stations_layer ,'geojson': stations_geojson})
