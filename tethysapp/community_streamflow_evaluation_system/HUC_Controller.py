@@ -584,7 +584,7 @@ class HUC_Eval(MapLayout):
                     selectable=True,
                     plottable=True,
             )
-            msg = f'Updated data for HUC {huc_id}.'
+            msg = f'Updated data for the selected HUC'
         except:
             print('No inputs, going to defaults')
             #put in some defaults

@@ -522,5 +522,5 @@ class Reach_Eval(MapLayout):
                 selectable=True,
                 plottable=True,
             )
-            msg = f"No data available for the selected reach IDs {reach_ids}"
+            msg = f"No data available for the selected reach ID"
         return JsonResponse({'success': True, 'message': msg ,'metadata': stations_layer ,'geojson': stations_geojson})

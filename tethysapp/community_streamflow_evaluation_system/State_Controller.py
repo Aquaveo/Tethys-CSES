@@ -521,7 +521,7 @@ class State_Eval(MapLayout):
                     selectable=True,
                     plottable=True,
             )
-            msg = f'Updated data for State: {data.get("state_id")}'
+            msg = f'Updated data'
         except:
             # state_id = 'AL'
             # USGS stations - from AWS s3
@@ -543,7 +543,7 @@ class State_Eval(MapLayout):
                 selectable=True,
                 plottable=True,
             )
-            msg = f'No data available for this HUC {request.session['state_id']}, please try another HUC or check your inputs.'
+            msg = f'No data available for this HUC, please try another HUC or check your inputs.'
         return JsonResponse({'success': True, 'message': msg,'metadata': stations_layer ,'geojson': stations_geojson})
 
 
