@@ -25,6 +25,8 @@ function updateData(event) {
     event.preventDefault();
     // Show loading message
     const loadingDiv = document.querySelector('.loading-text');
+    loadingDiv.innerHTML = "Updating data and layers...";
+
     loadingDiv.style.display = 'block';
 
 

@@ -449,7 +449,9 @@ class HUC_Eval(MapLayout):
                 DF = DF.loc[startdate:enddate]
                 DF.reset_index(inplace=True)
                 DF = DF.dropna()
-
+                if DF.empty:
+                    data = []
+                    return f'No data for Default Configuration:{model} Observed Streamflow at USGS site: {id}', data, layout
                 time_col = DF.Datetime.to_list()#limited to less than 500 obs/days 
                 USGS_streamflow_cfs = DF.USGS_flow.to_list()#limited to less than 500 obs/days 
                 Mod_streamflow_cfs = DF[f"{model_id[:3]}_flow"].to_list()#limited to less than 500 obs/days
@@ -505,6 +507,9 @@ class HUC_Eval(MapLayout):
                 DF = pd.concat([USGS_df, model_df], axis = 1, join = 'inner')
                 DF.reset_index(inplace=True)
                 DF = DF.dropna()
+                if DF.empty:
+                    data = []
+                    return f'No data for Default Configuration:{model} Observed Streamflow at USGS site: {id}', data, layout
                 time_col = DF.Datetime.to_list()[:45] 
                 USGS_streamflow_cfs = DF.USGS_flow.to_list()[:45] 
                 Mod_streamflow_cfs = DF[f"{model[:3]}_flow"].to_list()[:45]

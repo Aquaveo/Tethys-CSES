@@ -25,8 +25,8 @@ function updateData(event) {
 
   // Show loading message
   const loadingDiv = document.querySelector('.loading-text');
+  loadingDiv.innerHTML = "Updating data and layers...";
   loadingDiv.style.display = 'block';
-
   let start_date = document.getElementById("start-date").value;
   let end_date = document.getElementById("end-date").value;
   let huc_ids = document.getElementById("huc_ids").value;

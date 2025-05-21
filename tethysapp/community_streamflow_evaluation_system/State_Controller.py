@@ -410,7 +410,9 @@ class State_Eval(MapLayout):
                 DF = DF.loc[startdate:enddate]
                 DF.reset_index(inplace=True)
                 DF = DF.dropna()
-                
+                if DF.empty:
+                    data = []
+                    return f'No data for Default Configuration:{model} Observed Streamflow at USGS site: {id}', data, layout
                 time_col = DF.Datetime.to_list()#limited to less than 500 obs/days 
                 USGS_streamflow_cfs = DF.USGS_flow.to_list()#limited to less than 500 obs/days 
                 Mod_streamflow_cfs = DF[f"{model_id[:3]}_flow"].to_list()#limited to less than 500 obs/days
@@ -463,13 +465,14 @@ class State_Eval(MapLayout):
                 DF = pd.concat([USGS_df, model_df], axis = 1, join = 'inner')
                 DF.reset_index(inplace=True)
                 DF = DF.dropna()
+                if DF.empty:
+                    data = []
+                    return f'No data for Default Configuration:{model} Observed Streamflow at USGS site: {id}', data, layout
+                    
                 time_col = DF.Datetime.to_list()[:45] 
                 USGS_streamflow_cfs = DF.USGS_flow.to_list()[:45] 
                 Mod_streamflow_cfs = DF[f"{model[:3]}_flow"].to_list()[:45]
 
-                #calculate model skill
-                print(USGS_streamflow_cfs)
-                
                 rmse = round(root_mean_squared_error(USGS_streamflow_cfs, Mod_streamflow_cfs),0)
                 maxerror = round(max_error(USGS_streamflow_cfs, Mod_streamflow_cfs),0)
                 kge, r, alpha, beta = he.evaluator(he.kge,USGS_streamflow_cfs,Mod_streamflow_cfs)
@@ -543,7 +546,7 @@ class State_Eval(MapLayout):
                 selectable=True,
                 plottable=True,
             )
-            msg = f'No data available for this HUC, please try another HUC or check your inputs.'
+            msg = f'No data available for this State, please try another State or check your inputs.'
         return JsonResponse({'success': True, 'message': msg,'metadata': stations_layer ,'geojson': stations_geojson})
 
 
