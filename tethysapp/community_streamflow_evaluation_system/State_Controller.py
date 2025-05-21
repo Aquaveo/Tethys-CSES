@@ -452,58 +452,62 @@ class State_Eval(MapLayout):
             
             except:
                 print("No user inputs, default configuration.")
-                model = 'NWM_v2.1'
-                model_directory = f"{model}/NHD_segments_{state}.h5/{model}_{NHD_id}.csv"  #put state in geojson file
-                obj = BUCKET.Object(model_directory)
-                body = obj.get()['Body']
-                model_df = pd.read_csv(body)
-                model_df.pop('Unnamed: 0')
-                #combine Dfs, remove nans
-                
-                model_df.drop_duplicates(subset=['Datetime'],  inplace=True)
-                model_df.set_index('Datetime', inplace = True)
-                DF = pd.concat([USGS_df, model_df], axis = 1, join = 'inner')
-                DF.reset_index(inplace=True)
-                DF = DF.dropna()
-                if DF.empty:
+                try:
+                    model = 'NWM_v2.1'
+                    model_directory = f"{model}/NHD_segments_{state}.h5/{model}_{NHD_id}.csv"  #put state in geojson file
+                    obj = BUCKET.Object(model_directory)
+                    body = obj.get()['Body']
+                    model_df = pd.read_csv(body)
+                    model_df.pop('Unnamed: 0')
+                    #combine Dfs, remove nans
+                    
+                    model_df.drop_duplicates(subset=['Datetime'],  inplace=True)
+                    model_df.set_index('Datetime', inplace = True)
+                    DF = pd.concat([USGS_df, model_df], axis = 1, join = 'inner')
+                    DF.reset_index(inplace=True)
+                    DF = DF.dropna()
+                    if DF.empty:
+                        data = []
+                        return f'No data for Default Configuration:{model} Observed Streamflow at USGS site: {id}', data, layout
+                        
+                    time_col = DF.Datetime.to_list()[:45] 
+                    USGS_streamflow_cfs = DF.USGS_flow.to_list()[:45] 
+                    Mod_streamflow_cfs = DF[f"{model[:3]}_flow"].to_list()[:45]
+
+                    rmse = round(root_mean_squared_error(USGS_streamflow_cfs, Mod_streamflow_cfs),0)
+                    maxerror = round(max_error(USGS_streamflow_cfs, Mod_streamflow_cfs),0)
+                    kge, r, alpha, beta = he.evaluator(he.kge,USGS_streamflow_cfs,Mod_streamflow_cfs)
+                    kge = round(kge[0],2)
+
+                    data = [
+                        {
+                            'name': 'USGS Observed',
+                            'mode': 'lines',
+                            'x': time_col,
+                            'y': USGS_streamflow_cfs,
+                            'line': {
+                                'width': 2,
+                                'color': 'blue'
+                            }
+                        },
+                        {
+                            'name': f"Default Configuration: NWM v2.1 Modeled",
+                            'mode': 'lines',
+                            'x': time_col,
+                            'y': Mod_streamflow_cfs,
+                            'line': {
+                                'width': 2,
+                                'color': 'red'
+                            }
+                        },
+                    ]
+
+                    return f'Default Configuration:{model} Observed Streamflow at USGS site: {id} <p style="font-size:15px;margin-bottom: 0px;"> RMSE: {rmse} cfs </p> <p style="font-size:15px;margin-bottom: 0px;">KGE: {kge}</p> <p style="font-size:15px;margin-bottom: 0px;">MaxError: {maxerror} cfs</p>', data, layout
+            
+                except:    
                     data = []
                     return f'No data for Default Configuration:{model} Observed Streamflow at USGS site: {id}', data, layout
-                    
-                time_col = DF.Datetime.to_list()[:45] 
-                USGS_streamflow_cfs = DF.USGS_flow.to_list()[:45] 
-                Mod_streamflow_cfs = DF[f"{model[:3]}_flow"].to_list()[:45]
-
-                rmse = round(root_mean_squared_error(USGS_streamflow_cfs, Mod_streamflow_cfs),0)
-                maxerror = round(max_error(USGS_streamflow_cfs, Mod_streamflow_cfs),0)
-                kge, r, alpha, beta = he.evaluator(he.kge,USGS_streamflow_cfs,Mod_streamflow_cfs)
-                kge = round(kge[0],2)
-
-                data = [
-                    {
-                        'name': 'USGS Observed',
-                        'mode': 'lines',
-                        'x': time_col,
-                        'y': USGS_streamflow_cfs,
-                        'line': {
-                            'width': 2,
-                            'color': 'blue'
-                        }
-                    },
-                    {
-                        'name': f"Default Configuration: NWM v2.1 Modeled",
-                        'mode': 'lines',
-                        'x': time_col,
-                        'y': Mod_streamflow_cfs,
-                        'line': {
-                            'width': 2,
-                            'color': 'red'
-                        }
-                    },
-                ]
-
-                return f'Default Configuration:{model} Observed Streamflow at USGS site: {id} <p style="font-size:15px;margin-bottom: 0px;"> RMSE: {rmse} cfs </p> <p style="font-size:15px;margin-bottom: 0px;">KGE: {kge}</p> <p style="font-size:15px;margin-bottom: 0px;">MaxError: {maxerror} cfs</p>', data, layout
-            
-    
+                
     def update_state_eval_data(self, request, *args, **kwargs):
         """Respond to AJAX calls from the map page."""
         data = request.POST or request.json()
