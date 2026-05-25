@@ -6,11 +6,6 @@ build-backend = "setuptools.build_meta"
 name = "tethysapp-community_streamflow_evaluation_system"
 version = "0.0.1"
 description = ""
-long_description = ""
-keywords = ""
-authors = [
-    {name = "", email = ""},
-]
 license = {text = ""}
 requires-python = ">=3.10"
 dependencies = []
