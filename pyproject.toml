@@ -14,4 +14,4 @@ dependencies = []
 include = ["tethysapp*"]
 
 [tool.setuptools.package-data]
-"*" = ["*.js", "*.css", "*.html", "*.png", "*.ico", "*.jpg", "*.gif", "*.svg", "*.json", "*.yml", "*.yaml", "*.txt", "*.xml", "*.csv", "*.geojson", "*.tif", "*.tiff"]
+"*" = ["*.js", "*.css", "*.html", "*.png", "*.ico", "*.jpg", "*.gif", "*.svg", "*.json", "*.yml", "*.yaml", "*.txt", "*.xml", "*.csv", "*.geojson", "*.tif", "*.tiff", "*.JPG", "*.JPEG", "*.PNG", "*.GIF", "*.SVG", "*.TIF", "*.TIFF"]
